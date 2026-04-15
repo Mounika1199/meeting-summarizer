@@ -1,0 +1,19 @@
+# Dockerfile.ollama
+FROM ollama/ollama:latest
+
+# Create a non-root user for running Ollama
+RUN useradd -m ollamauser && \
+    mkdir -p /home/ollamauser/.ollama && \
+    chown -R ollamauser:ollamauser /home/ollamauser
+
+# Switch to non-root user
+USER ollamauser
+
+# Set working directory
+WORKDIR /home/ollamauser
+
+# Expose Ollama API port
+EXPOSE 11434
+
+# Start Ollama
+CMD ["serve"]

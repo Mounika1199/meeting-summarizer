@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+requests
+httpx
+transformers
+huggingface_hub
+uvicorn[standard]
+gunicorn

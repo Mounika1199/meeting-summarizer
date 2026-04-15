@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Summarization Application</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"> <!-- Prism.js CSS -->
+    <style>
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+	    overflow: hidden;
+        }
+        header {
+            width: 100%;
+                background-color: #940025; /* Header background color */
+                color: white;
+                padding: 10px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between; /* Space between logo and title */
+            
+        }
+        .header-content {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                justify-content: center;
+        }
+
+        h1 {
+                margin: 0;
+                font-size: 24px;
+                font-weight: bold;
+                font-family: 'Noto Sans', sans-serif;
+        }
+        #chat-container {
+                width: 95%;
+                max-width: 800px;
+                background: white;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+                border-radius: 10px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                height: calc(100vh - 140px);
+                margin-top: 40px;
+                overflow-y: auto;
+        }
+        #chat-header {
+                background-color: white;
+                padding: 3px 5px;
+                text-align: center;
+                font-size: 0.8em;
+                color: #bbb; /* Light text color */
+                font-family: 'Noto Sans', sans-serif;
+                font-weight: lighter;
+        }
+        #messages {
+                list-style: none;
+                padding: 20px;
+                flex-grow: 1;
+                overflow-y: auto;
+        }
+        #messages li {
+                margin-bottom: 10px;
+                padding: 10px;
+                border-radius: 5px;
+                word-wrap: break-word;
+                width: fit-content;
+                max-width: 100%;
+        }
+        #messages .user {
+                background: #f4f4f4;
+                color: black;
+                align-self: flex-end;
+                text-align: right;
+                font-family: 'Noto Sans', sans-serif;
+        }
+        #messages .bot {
+                color: black;
+                align-self: flex-start;
+                text-align: left;
+                white-space: pre-wrap;
+                line-height: 1.6;
+                font-family: 'Noto Sans', sans-serif;
+        }
+        #messages .bot .code-block {
+                background: #2d2d2d; /* Prism.js theme background */
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                overflow-x: auto;
+                white-space: pre-wrap;
+                font-size: 1rem;
+                line-height: 1.5;
+                font-family: 'Noto Sans', sans-serif;
+        }
+        #input-container {
+                display: flex;
+                flex-direction: column;
+                padding: 10px;
+                background: #f1f1f1;
+                border-top: 1px solid #ccc;
+        }
+        #input-container select,
+        #input-container input {
+                padding: 12px;
+                font-size: 1rem;
+                font-family: 'Noto Sans', sans-serif;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                margin-bottom: 10px;
+                outline: none;
+                width: 100%;
+        }
+        #input-container button {
+                padding: 12px 20px;
+                border: none;
+                font-size: 16px;
+                font-family: 'Noto Sans', sans-serif;
+                background: #940023;
+                color: white;
+                border-radius: 5px;
+                cursor: pointer;
+                outline: none;
+        }
+        #input-container button:hover {
+                background: #940023;
+        }
+        #input-container button:active {
+                background: #940023;
+        }
+        label:hover::after {
+            content: "Only upload text files";
+            position: absolute;
+            bottom: 40px; /* Position above the icon */
+            left: -10px;
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            z-index: 100;
+            opacity: 0.9;
+        }
+        label:hover {
+            position: relative;
+        }
+        #languageSelect {
+            color: #8a8c90; /* Light grey color for the placeholder */
+            font-style: italic; /* Italic style for placeholder */
+        }
+
+        #languageSelect:focus {
+            color: black; /* Change text color to black when focused */
+            font-style: normal; /* Remove italic style when focused */
+        }
+
+        #languageSelect option {
+            color: black; /* Normal color for options */
+            font-style: normal; /* Normal style for options */
+        }
+
+        #languageSelect option[disabled] {
+            color: #8a8c90; /* Light grey color for the placeholder */
+            font-style: italic; /* Italic style for placeholder */
+        }
+        
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>Summarization Assistant</h1>
+        </div>
+    </header>
+    <div id="chat-container">
+        <div id="chat-header">
+            <h2>Google Gemma3</h2>
+        </div>
+        <ul id="messages"></ul>
+        <div id="input-container" style="position: relative; width: 100%;">
+            <div id="purpose-container" style="width: 100%; margin-bottom: 10px;">
+                <label for="purposeSelect" style="font-family: 'Noto Sans', sans-serif; font-size: 1rem; margin-bottom: 3px; display: block; color: #333;">
+                    What do you want to use this application for? (default: Summarization)
+                </label>
+                <select 
+                    id="purposeSelect" 
+                    style="margin-top: 6px; padding: 12px; font-size: 1rem; font-family: 'Noto Sans', sans-serif; border: 1px solid #ccc; border-radius: 5px; width: 98%;"
+                >
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Transcription">Transcription</option>
+                    <option value="Transcription + Analysis">Transcription + Analysis</option>
+                    <option value="Summarization">Summarization</option>
+                </select>
+            </div>
+            <div id="message-container" style="position: relative; width: 98%; display: flex; align-items: center;margin-bottom: 0px;">
+                <label for="fileUpload" style="position: absolute; left: 10px; cursor: pointer;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/54/54848.png" alt="Upload Icon" style="width: 25px; height: 22px;" />
+                </label>
+                <input type="file" id="fileUpload" style="display: none;" onchange="handleFileUpload(event)" />
+                <input 
+                    type="text" 
+                    id="messageText" 
+                    placeholder="Type your message here..." 
+                    autocomplete="off" 
+                    required 
+                    style="padding-left: 40px; flex-grow: 1; width: 100%;"
+                />
+            </div>
+            <select id="languageSelect" style="margin-top: 6px; padding: 12px; font-size: 1rem; font-family: 'Noto Sans', sans-serif; border: 1px solid #ccc; border-radius: 5px; width: 98%;">
+                <option value="English" disabled selected>Select summarization Language (Default is English)</option>
+                <option value="English">English</option>
+                <option value="French">French</option>
+                <option value="German">German</option>
+                <option value="Spanish">Spanish</option>
+                <option value="Italian">Italian</option>
+                <option value="Portuguese">Portuguese</option>
+                <option value="Chinese">Chinese</option>
+                <option value="Japanese">Japanese</option>
+                <option value="Korean">Korean</option>
+                <option value="Arabic">Arabic</option>
+                <option value="Hindi">Hindi</option>
+            </select>
+            <button onclick="sendMessage()" style="margin-top: 10px; width: 98%">Send</button>
+        </div>                
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script> <!-- Prism.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script> <!-- JavaScript language syntax -->
+    <script>
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            const messages = document.getElementById('messages');
+            const purposeSelect = document.getElementById("purposeSelect");
+            const messageContainer = document.getElementById("message-container");
+            const languageSelect = document.getElementById("languageSelect");
+
+            purposeSelect.addEventListener("change", function () {
+            const selectedValue = purposeSelect.value;
+
+            if (selectedValue === "Transcription") {
+                    // Replace messageText with audio URL input
+                    messageContainer.innerHTML = `
+                        <input 
+                            type="url" 
+                            id="audioUrl" 
+                            placeholder="Enter the URL for the audio file..." 
+                            autocomplete="off" 
+                            required 
+                            style="padding-left: 20px; flex-grow: 1; width: 100%;"
+                        />
+                    `;
+                    if (languageSelect) {
+                        languageSelect.style.display = "none";
+                    }
+            } else if (selectedValue === "Transcription + Analysis") {
+                // Restore messageText field
+                messageContainer.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 10px; width: 98%;">
+                        <input 
+                            type="url" 
+                            id="audioUrl" 
+                            placeholder="Enter the URL for the audio file..." 
+                            autocomplete="off" 
+                            required 
+                            style="padding-left: 20px; flex-grow: 1; width: 97%;"
+                        />
+                        <input 
+                            type="text" 
+                            id="analysisText" 
+                            placeholder="Enter the prompt for further analysis of the transcript..." 
+                            autocomplete="off" 
+                            required 
+                            style="padding-left: 20px; flex-grow: 1; width: 97%;"
+                        />
+                    </div>
+                `;
+                if (languageSelect) {
+                     languageSelect.style.display = "none";
+                }
+            } else {
+                // Restore messageText field
+                messageContainer.innerHTML = `
+                    <label for="fileUpload" style="position: absolute; left: 10px; cursor: pointer;">
+                        <img src="https://cdn-icons-png.flaticon.com/512/54/54848.png" alt="Upload Icon" style="width: 25px; height: 22px;" />
+                    </label>
+                    <input type="file" id="fileUpload" style="display: none;" onchange="handleFileUpload(event)" />
+                    <input 
+                        type="text" 
+                        id="messageText" 
+                        placeholder="Type your message here..." 
+                        autocomplete="off" 
+                        required 
+                        style="padding-left: 40px; flex-grow: 1; width: 100%;"
+                    />
+                `;
+                if (languageSelect) {
+                    languageSelect.style.display = "inline-block";
+                }
+            }
+            });
+
+            // Display initial welcome message
+            const botMessage = document.createElement('li');
+            botMessage.className = 'bot';
+            botMessage.style.display = 'flex'; // Use flexbox for alignment
+            botMessage.style.alignItems = 'center';
+            botMessage.style.fontSize = '1.2em'; // Bigger text size for better readability
+    
+            const qwenIcon = document.createElement('img');
+            qwenIcon.src = 'https://a.fsdn.com/allura/s/mistral-nemo/icon?6d280e7f5c255c64c2853a34f7cf7b78abff0a09d4a60959dbd381e97524082f?&w=148'; // Replace with the actual path to your Qwen image
+            qwenIcon.alt = 'Qwen Symbol';
+            qwenIcon.style.width = '35px';
+            qwenIcon.style.height = '35px';
+            qwenIcon.style.marginRight = '8px';
+    
+            const messageText = document.createElement('span');
+            messageText.textContent = 'Nemo is typing...';
+    
+            botMessage.appendChild(qwenIcon);
+            botMessage.appendChild(messageText);
+            messages.appendChild(botMessage);
+            messages.scrollTop = messages.scrollHeight;
+    
+            // Simulate typing effect for initial message
+            const defaultMessage = "Hi, my name is Gemma. How may I help you?";
+            let index = 0;
+    
+            setTimeout(() => {
+                const interval = setInterval(() => {
+                    messageText.textContent = defaultMessage.slice(0, index + 1);
+                    index++;
+    
+                    if (index === defaultMessage.length) {
+                        clearInterval(interval);
+                    }
+                }, 30);
+    
+                messages.scrollTop = messages.scrollHeight;
+            }, 500);
+        });
+    
+        function sendMessage() {
+            const purpose = document.getElementById("purposeSelect").value;
+            const audioUrl = document.getElementById("audioUrl") ? document.getElementById("audioUrl").value.trim() : null;
+            const analysisText = document.getElementById("analysisText") ? document.getElementById("analysisText").value.trim() : null;
+            const messageText = document.getElementById("messageText") ? document.getElementById("messageText").value.trim() : null;
+            const selectedLanguage = document.getElementById("languageSelect") ? document.getElementById("languageSelect").value : null;
+
+            // Validate required fields based on the selected purpose
+            if (purpose === "Only Transcription" && !audioUrl) {
+                alert("Please enter the audio URL.");
+                return;
+            } else if (purpose === "Transcription + Analysis" && (!audioUrl || !analysisText)) {
+                alert("Please enter both the audio URL and analysis text.");
+                return;
+            } else if (purpose === "Only Summarization" && !messageText) {
+                alert("Please enter the message text.");
+                return;
+            }
+            // Construct the JSON payload
+            const payload = {
+                purpose,
+                audioUrl: audioUrl || null,
+                analysisText: analysisText || null,
+                text: messageText || null,
+                language: selectedLanguage || null,
+            };
+            console.log("Payload to be sent:", payload);
+
+            // Add user message
+            const messages = document.getElementById('messages');
+            const userMessage = document.createElement('li');
+            userMessage.className = 'user';
+
+            // Customize the user message based on the purpose
+            let userMessageContent = "";
+            if (purpose === "Transcription") {
+                userMessageContent = "URL uploaded: " + audioUrl;
+            } else if (purpose === "Transcription + Analysis") {
+                userMessageContent = `URL uploaded: ${audioUrl}, Analysis text: ${analysisText}`;
+            } else if (purpose === "Summarization") {
+                userMessageContent = `Message: ${messageText}`;
+            }
+
+            const content = document.createTextNode(userMessageContent);
+            userMessage.appendChild(content);
+            messages.appendChild(userMessage);
+            messages.scrollTop = messages.scrollHeight;
+    
+            // Add "Qwen is typing..." indicator
+            const botMessage = document.createElement('li');
+            botMessage.className = 'bot';
+            botMessage.style.display = 'flex'; // Use flexbox for alignment
+            botMessage.style.alignItems = 'center';
+            botMessage.style.fontSize = '1.2em';
+    
+            const qwenIcon = document.createElement('img');
+            qwenIcon.src = 'https://a.fsdn.com/allura/s/mistral-nemo/icon?6d280e7f5c255c64c2853a34f7cf7b78abff0a09d4a60959dbd381e97524082f?&w=148';
+            qwenIcon.alt = 'Qwen Symbol';
+            qwenIcon.style.width = '35px';
+            qwenIcon.style.height = '35px';
+            qwenIcon.style.marginRight = '8px';
+    
+            const typingIndicator = document.createElement('span');
+            typingIndicator.textContent = 'Nemo is typing...';
+    
+            botMessage.appendChild(qwenIcon);
+            botMessage.appendChild(typingIndicator);
+            messages.appendChild(botMessage);
+            messages.scrollTop = messages.scrollHeight;
+    
+            ws.send(JSON.stringify(payload));
+    
+            // Clear input fields after sending
+            if (audioUrl) document.getElementById("audioUrl").value = "";
+            if (analysisText) document.getElementById("analysisText").value = "";
+            if (messageText) document.getElementById("messageText").value = "";
+    
+            // Handle incoming messages
+            ws.onmessage = function (event) {
+                const token = event.data;
+    
+                // Remove the typing indicator
+                if (botMessage && messages.contains(botMessage)) {
+                    messages.removeChild(botMessage);
+                }
+    
+                let responseMessage = messages.querySelector('li.bot:last-child');
+                if (!responseMessage || responseMessage.getAttribute('data-complete') === 'true') {
+                    responseMessage = document.createElement('li');
+                    responseMessage.className = 'bot';
+                    responseMessage.textContent = '';
+                    messages.appendChild(responseMessage);
+                }
+
+                    // Handle headings and bold text
+                const normalText = document.createElement('span');
+                normalText.textContent = token; // Append the current token
+                responseMessage.appendChild(normalText);
+                
+            }
+
+                // Scroll to the bottom after every token
+            messages.scrollTop = messages.scrollHeight;
+
+        }
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    const fileContent = reader.result.trim();
+                    if (fileContent) {
+                        document.getElementById("messageText").value = fileContent.replace(/\n/g, ' ');;
+                    } else {
+                        alert("The file is empty!");
+                    }
+		    document.getElementById("fileUpload").value = "";
+                };
+                reader.readAsText(file);
+            } else {
+                alert("No file selected!");
+            }
+        }
+
+        // Send message on Enter key press
+        document.getElementById("messageText").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+    
+</body>
+</html>
+
