@@ -36,7 +36,7 @@ Hierarchical summarization pipeline
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/meeting-summarizer.git
+git clone https://github.com/Mounika1199/meeting-summarizer.git
 cd meeting-summarizer
 ```
 
